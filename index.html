@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>College Management System</title>
+
+    <!-- jsPDF for REAL PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial
+        }
+        
+        body {
+            background: #f1f2f6
+        }
+        
+        header {
+            background: #0a3d62;
+            color: white;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between
+        }
+        
+        header a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px
+        }
+        
+        .hero {
+            height: 40vh;
+            background: linear-gradient(to right, #0a3d62, #3c6382);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center
+        }
+        
+        .box,
+        .profile {
+            background: white;
+            width: 360px;
+            margin: 30px auto;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1)
+        }
+        
+        .profile {
+            display: none;
+            width: 480px
+        }
+        
+        input,
+        select,
+        button {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0
+        }
+        
+        button {
+            background: #0a3d62;
+            color: white;
+            border: none;
+            cursor: pointer
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px
+        }
+        
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 8px
+        }
+        
+        footer {
+            background: #0a3d62;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            margin-top: 30px
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h2>ABC College</h2>
+        <nav>
+            <a href="#">Home</a>
+            <a href="#login">Login</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h1>College Management System</h1>
+        <p>Student | Teacher | Admin</p>
+    </section>
+
+    <!-- LOGIN -->
+    <section id="login">
+        <div class="box">
+            <h3>🎓 Student Login</h3>
+            <input id="sUser" placeholder="Student ID or Email">
+            <input id="sPass" type="password" placeholder="Password">
+            <button onclick="studentLogin()">Login</button>
+            <p onclick="forgotPassword()" style="cursor:pointer;color:#0a3d62">Forgot Password?</p>
+        </div>
+
+        <div class="box">
+            <h3>👨‍🏫 Teacher Login</h3>
+            <input id="tUser" placeholder="Teacher ID">
+            <input id="tPass" type="password" placeholder="Password">
+            <button onclick="teacherLogin()">Login</button>
+        </div>
+
+        <div class="box">
+            <h3>🛠 Admin Login</h3>
+            <input id="aUser" placeholder="Admin ID">
+            <input id="aPass" type="password" placeholder="Password">
+            <button onclick="adminLogin()">Login</button>
+        </div>
+    </section>
+
+    <!-- STUDENT PROFILE -->
+    <section class="profile" id="studentProfile">
+        <h2 id="sName"></h2>
+        <p>ID: <span id="sid"></span></p>
+        <p>Email: <span id="semail"></span></p>
+        <p>Course: <span id="scourse"></span></p>
+
+        <h3>📄 Marksheet</h3>
+        <table>
+            <tr>
+                <th>Subject</th>
+                <th>Marks</th>
+            </tr>
+            <tr>
+                <td>Math</td>
+                <td>85</td>
+            </tr>
+            <tr>
+                <td>Science</td>
+                <td>78</td>
+            </tr>
+        </table>
+
+        <button onclick="downloadPDF()">Download PDF Marksheet</button>
+
+        <h3>📝 Exam Registration</h3>
+        <select>
+<option>Semester 1</option>
+<option>Semester 2</option>
+</select>
+        <button onclick="alert('Exam Registered Successfully')">Register</button>
+
+        <button onclick="logout()">Logout</button>
+    </section>
+
+    <!-- TEACHER PROFILE -->
+    <section class="profile" id="teacherProfile">
+        <h2 id="tName"></h2>
+        <p>Department: Computer Science</p>
+        <button onclick="logout()">Logout</button>
+    </section>
+
+    <!-- ADMIN PANEL -->
+    <section class="profile" id="adminPanel">
+        <h2>🛠 Admin Panel</h2>
+        <input id="newName" placeholder="Student Name">
+        <input id="newEmail" placeholder="Email">
+        <input id="newId" placeholder="Student ID">
+        <input id="newPass" placeholder="Password">
+        <button onclick="addStudent()">Add Student</button>
+        <button onclick="logout()">Logout</button>
+    </section>
+
+    <footer>
+        © 2026 ABC College
+    </footer>
+
+    <script>
+        /* ================= DATABASE (DEMO – FIREBASE READY STRUCTURE) ================= */
+
+        let students = [{
+            id: "S101",
+            email: "rahul@gmail.com",
+            pass: "1234",
+            name: "Rahul Sharma",
+            course: "BCA"
+        }, {
+            id: "S102",
+            email: "aman@gmail.com",
+            pass: "abcd",
+            name: "Aman Verma",
+            course: "B.Tech"
+        }];
+
+        let teachers = [{
+            id: "T01",
+            pass: "admin",
+            name: "Dr. Sharma"
+        }];
+        let admin = {
+            id: "admin",
+            pass: "admin123"
+        };
+
+        /* ================= STUDENT LOGIN ================= */
+        function studentLogin() {
+            let u = sUser.value.trim(),
+                p = sPass.value.trim();
+            let s = students.find(x => (x.id === u || x.email === u) && x.pass === p);
+            if (s) {
+                login.style.display = "none";
+                studentProfile.style.display = "block";
+                sName.innerText = "🎓 " + s.name;
+                sid.innerText = s.id;
+                semail.innerText = s.email;
+                scourse.innerText = s.course;
+            } else alert("Invalid Student Login");
+        }
+
+        /* ================= TEACHER LOGIN ================= */
+        function teacherLogin() {
+            let t = teachers.find(x => x.id === tUser.value && x.pass === tPass.value);
+            if (t) {
+                login.style.display = "none";
+                teacherProfile.style.display = "block";
+                tName.innerText = "👨‍🏫 " + t.name;
+            } else alert("Invalid Teacher Login");
+        }
+
+        /* ================= ADMIN LOGIN ================= */
+        function adminLogin() {
+            if (aUser.value === admin.id && aPass.value === admin.pass) {
+                login.style.display = "none";
+                adminPanel.style.display = "block";
+            } else alert("Invalid Admin Login");
+        }
+
+        /* ================= ADD STUDENT (ADMIN) ================= */
+        function addStudent() {
+            students.push({
+                id: newId.value,
+                email: newEmail.value,
+                pass: newPass.value,
+                name: newName.value,
+                course: "BCA"
+            });
+            alert("Student Added Successfully");
+        }
+
+        /* ================= FORGOT PASSWORD ================= */
+        function forgotPassword() {
+            let email = prompt("Enter registered email:");
+            let s = students.find(x => x.email === email);
+            if (s) alert("Password sent to email (demo): " + s.pass);
+            else alert("Email not found");
+        }
+
+        /* ================= PDF MARKSHEET ================= */
+        function downloadPDF() {
+            const {
+                jsPDF
+            } = window.jspdf;
+            const pdf = new jsPDF();
+            pdf.text("ABC College - Marksheet", 20, 20);
+            pdf.text("Name: " + sName.innerText, 20, 40);
+            pdf.text("ID: " + sid.innerText, 20, 50);
+            pdf.text("Math: 85", 20, 70);
+            pdf.text("Science: 78", 20, 80);
+            pdf.save("marksheet.pdf");
+        }
+
+        /* ================= LOGOUT ================= */
+        function logout() {
+            location.reload();
+        }
+    </script>
+
+</body>
+
+</html>
